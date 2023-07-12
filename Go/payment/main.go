@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	notifMessage "github.com/AT-SmFoYcSNaQ/AT2023/Go/notification/messages"
 	orderMessage "github.com/AT-SmFoYcSNaQ/AT2023/Go/order/messages"
 	console "github.com/asynkron/goconsole"
 	"github.com/asynkron/protoactor-go/actor"
@@ -87,13 +86,13 @@ func (actor *PaymentActor) sendPaymentInfoNotification(paymentReq PaymentReq, is
 
 	spawnResponse, err := actor.remoting.SpawnNamed("127.0.0.1:8098", "notification-actor", "notification-actor", time.Second)
 
-	messageContent := &notifMessage.Message{
+	messageContent := &orderMessage.Message{
 		Content: paymentMessage,
 		Action:  "",
 		OrderId: "",
 	}
 
-	message := &notifMessage.Notification{
+	message := &orderMessage.Notification{
 		Message:    messageContent,
 		ReceiverId: paymentReq.UserId,
 	}
@@ -121,10 +120,10 @@ func main() {
 
 	// Create the payment actor and register it with the remote system
 	paymentActorProps := actor.PropsFromProducer(func() actor.Actor { return &PaymentActor{remoting: remoting, context: context} })
+	context.Spawn(paymentActorProps)
+	//remoting.Register("payment-actor", paymentActorProps)
 
-	remoting.Register("payment-actor", paymentActorProps)
-
-	spawnResponse, err := remoting.SpawnNamed("192.168.1.48:8092", "notification-actor", "notification-actor", time.Second)
+	spawnResponse, err := remoting.SpawnNamed("192.168.1.48:8092", "notification-actor", "notification-actor", 5*time.Second)
 
 	if err != nil {
 		panic(err)
@@ -133,13 +132,13 @@ func main() {
 
 	paymentMessage := "NOTIFICATIONNOTIFICATION"
 
-	messageContent := &notifMessage.Message{
+	messageContent := &orderMessage.Message{
 		Content: paymentMessage,
-		Action:  "",
-		OrderId: "",
+		Action:  "update sm",
+		OrderId: "123",
 	}
 
-	message := &notifMessage.Notification{
+	message := &orderMessage.Notification{
 		Message:    messageContent,
 		ReceiverId: "5a543ba3-9ee2-48f9-b3db-d85c443a1512",
 	}
